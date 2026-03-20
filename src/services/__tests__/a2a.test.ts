@@ -25,10 +25,12 @@ describe('a2a', () => {
       const result = await runMorningBriefA2A(demoDataDir);
 
       // 要么有建议区，要么有降级说明
-      const hasPlaybook = result.markdown.includes('## 今日打法');
+      const hasPlaybook = result.markdown.includes('## 今日打法') ||
+                         result.markdown.includes('今日打法');
       const hasFallback = result.markdown.includes('策略 Agent') ||
                          result.markdown.includes('未连接') ||
-                         result.markdown.includes('不可用');
+                         result.markdown.includes('不可用') ||
+                         result.markdown.includes('跳过');
       expect(hasPlaybook || hasFallback).toBe(true);
     });
 

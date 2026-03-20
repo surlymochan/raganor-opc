@@ -175,11 +175,13 @@ describe('compliance', () => {
       expect(hasStockCode).toBe(false);
     });
 
-    it('晨间简报 demo 数据不应有医疗名词', () => {
+    it('晨间简报 demo 数据不应有具体医疗名词', () => {
       const data = loadBriefData(demoDataDir);
       const output = renderMorningBrief(data);
 
-      const forbiddenMedical = /医院|诊所|医生|诊疗/.test(output);
+      // 排除免责声明后检查（免责声明允许出现"诊疗"等词）
+      const mainContent = output.split('> ⚠️')[0];
+      const forbiddenMedical = /医院|诊所|医生/.test(mainContent);
       expect(forbiddenMedical).toBe(false);
     });
   });

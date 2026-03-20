@@ -97,16 +97,15 @@ export async function runMorningBriefA2A(dataDir: string): Promise<Orchestration
  * 合并晨间简报
  */
 function mergeMorningBrief(factSection: string, playbook: string, disclaimer: string): string {
-  // 移除 factSection 中的股票和健康占位（因为会放到最后）
-  // 实际上，我们保留完整 factSection，然后在末尾附加建议区
-
-  // 找到建议区应该插入的位置（在 ## 今日习惯 之后）
-  // 由于当前渲染器没有分离，我们简单地在末尾附加
-
   // 检查是否已经有建议区（降级情况）
-  if (playbook.includes('策略 Agent 未连接') || playbook.includes('暂时不可用')) {
-    // 不附加建议区，只返回事实区
-    return factSection;
+  const isFallback = playbook.includes('策略 Agent 未连接') ||
+                     playbook.includes('暂时不可用') ||
+                     playbook.includes('未连接');
+
+  if (isFallback) {
+    // 降级情况：附加建议区标题和降级说明
+    const fallbackSection = `\n\n## 今日打法（建议，非事实）\n\n${playbook}\n\n> ${disclaimer}`;
+    return factSection + fallbackSection;
   }
 
   // 正常情况：附加建议区
