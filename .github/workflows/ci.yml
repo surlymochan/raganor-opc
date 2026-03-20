@@ -80,10 +80,10 @@ jobs:
         run: npm test -- src/services/__tests__/compliance.test.ts
 
       - name: Verify morning brief output
-        run: npm run brief:morning > /dev/null 2>&1 && echo "Morning brief: OK" || exit 1
+        run: "npm run brief:morning > /dev/null 2>&1 && echo 'Morning brief: OK' || exit 1"
 
       - name: Verify evening brief output
-        run: npm run brief:evening > /dev/null 2>&1 && echo "Evening brief: OK" || exit 1
+        run: "npm run brief:evening > /dev/null 2>&1 && echo 'Evening brief: OK' || exit 1"
 
   # 4. 构建验证
   build:
