@@ -3,7 +3,8 @@
  * 负责注册、执行任务、结果回调
  */
 
-import { z } from 'zod';
+/* global setTimeout setInterval */
+
 import { generateTaskId } from '../services/a2a-envelope.js';
 
 // 类型定义
@@ -316,7 +317,7 @@ export class WorkerHealthTracker {
   /**
    * 启动健康检查循环
    */
-  start(): NodeJS.Timeout {
+  start(): ReturnType<typeof setInterval> {
     return setInterval(() => {
       this.checkAll();
     }, this.checkInterval);

@@ -3,6 +3,8 @@
  * 核心：插件注册表 + 任务分发 + 状态持久化
  */
 
+/* global URL */
+
 import { z } from 'zod';
 import http from 'http';
 import { generateTaskId, type A2AEnvelope, type AgentId } from '../services/a2a-envelope.js';

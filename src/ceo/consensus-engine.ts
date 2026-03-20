@@ -3,9 +3,7 @@
  * 负责：规则引擎 + 决策合成 + 分歧升级 + 决策日志
  */
 
-import { z } from 'zod';
-import type { QA1Result } from './qa-adversarial.js';
-import type { AdversarialResult } from './qa-adversarial.js';
+import type { QA1Result, AdversarialResult } from './qa-adversarial.js';
 
 // ============ 类型定义 ============
 
@@ -83,25 +81,6 @@ export interface DecisionLogEntry {
 }
 
 // ============ 内置规则 ============
-
-/**
- * 自动通过：QA-1 通过且 QA-2 未触发
- */
-function createAutoPassRule(): Rule {
-  return {
-    id: 'auto_pass',
-    name: '自动通过',
-    description: 'QA-1 通过且 QA-2 未触发或无异议',
-    condition: (ctx: ConsensusContext) => {
-      if (!ctx.qa1.passed) return false;
-      if (!ctx.qa2) return true; // 没有 QA-2 时，信任 QA-1
-      return ctx.qa2.agreedWithQA1 && ctx.qa2.challenges.length === 0;
-    },
-    action: 'pass',
-    priority: 1,
-    reason: 'QA-1 通过，QA-2 无异议'
-  };
-}
 
 /**
  * 自动拒绝：QA-1 失败
@@ -257,9 +236,6 @@ export class ConsensusEngine {
     this.registerDefaultRules();
   }
 
-  /**
-   * 注册默认规则
-   */
   private registerDefaultRules(): void {
     // 按优先级排序，低数字先匹配
     // 注意：reject 规则优先级更高，因为拒绝比通过更需要谨慎

@@ -4,7 +4,8 @@
  */
 
 import { io, Socket } from 'socket.io-client';
-import { generateTaskId } from '../services/a2a-envelope.js';
+
+/* global setTimeout clearTimeout NodeJS */
 
 // ============ 类型定义 ============
 
@@ -68,7 +69,7 @@ export interface ChannelIds {
 /**
  * 消息处理器
  */
-export type MessageHandler = (envelope: MessageEnvelope, raw: ChatMessage) => void;
+export type MessageHandler = (_envelope: MessageEnvelope, _raw: ChatMessage) => void;
 
 /**
  * 原始聊天消息

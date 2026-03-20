@@ -3,14 +3,7 @@
  * 负责：挑战 QA-1 结论 + 破坏性测试 + 边界条件 + 升级决策
  */
 
-import { z } from 'zod';
-import type {
-  ValidationResult,
-  InvariantResult,
-  ValidationContext,
-  TestCase,
-  GoldenSample
-} from './qa-validator.js';
+import type { ValidationResult, InvariantResult } from './qa-validator.js';
 
 // ============ 类型定义 ============
 
@@ -113,7 +106,7 @@ export const DEFAULT_TRIGGERS: QA2TriggerConfig = {
 /**
  * 空输入测试
  */
-function generateEmptyInputCases(taskType: string): AdversarialTestCase[] {
+function generateEmptyInputCases(_taskType: string): AdversarialTestCase[] {
   return [
     {
       id: `empty-string-${Date.now()}`,
@@ -153,7 +146,7 @@ function generateEmptyInputCases(taskType: string): AdversarialTestCase[] {
 /**
  * 极端参数测试
  */
-function generateExtremeCases(taskType: string): AdversarialTestCase[] {
+function generateExtremeCases(_taskType: string): AdversarialTestCase[] {
   return [
     {
       id: `very-long-${Date.now()}`,
@@ -193,7 +186,7 @@ function generateExtremeCases(taskType: string): AdversarialTestCase[] {
 /**
  * 对抗性 Prompt 测试
  */
-function generateAdversarialPromptCases(taskType: string): AdversarialTestCase[] {
+function generateAdversarialPromptCases(_taskType: string): AdversarialTestCase[] {
   return [
     {
       id: `ignore-instructions-${Date.now()}`,
@@ -225,7 +218,7 @@ function generateAdversarialPromptCases(taskType: string): AdversarialTestCase[]
 /**
  * 边界条件测试
  */
-function generateBoundaryCases(taskType: string): AdversarialTestCase[] {
+function generateBoundaryCases(_taskType: string): AdversarialTestCase[] {
   return [
     {
       id: `boundary-date-${Date.now()}`,
@@ -284,7 +277,7 @@ export class QA2Adversarial {
       {
         id: 'qa1_qa2_disagree',
         name: 'QA1 与 QA2 结论不一致',
-        condition: (result: AdversarialResult, qa1: QA1Result) =>
+        condition: (result: AdversarialResult, _qa1: QA1Result) =>
           result.agreedWithQA1 === false && result.challenges.length > 0,
         reason: 'QA-1 和 QA-2 对任务质量评估不一致',
         recommendation: '需要人工仲裁'
@@ -319,26 +312,24 @@ export class QA2Adversarial {
    * 检查是否应该触发 QA-2
    */
   shouldTrigger(qa1Result: QA1Result, coverage?: number): boolean {
-    const { triggerConfig } = this;
-
     // 高风险任务总是触发
-    if (triggerConfig.highRiskTask && this.isHighRiskTask(qa1Result.taskType)) {
+    if (this.triggerConfig.highRiskTask && this.isHighRiskTask(qa1Result.taskType)) {
       return true;
     }
 
     // QA-1 拒绝时触发
-    if (triggerConfig.qa1Rejected && !qa1Result.passed) {
+    if (this.triggerConfig.qa1Rejected && !qa1Result.passed) {
       return true;
     }
 
     // 新任务类型触发
-    if (triggerConfig.newTaskType && this.isNewTaskType(qa1Result.taskType)) {
+    if (this.triggerConfig.newTaskType && this.isNewTaskType(qa1Result.taskType)) {
       return true;
     }
 
     // 覆盖率不足时触发
-    if (triggerConfig.coverageBelowThreshold && coverage !== undefined) {
-      if (coverage < triggerConfig.coverageThreshold) {
+    if (this.triggerConfig.coverageBelowThreshold && coverage !== undefined) {
+      if (coverage < this.triggerConfig.coverageThreshold) {
         return true;
       }
     }
@@ -417,14 +408,14 @@ export class QA2Adversarial {
   /**
    * 生成对抗性测试用例
    */
-  generateAdversarialCases(taskType: string, qa1Result?: QA1Result): AdversarialTestCase[] {
+  generateAdversarialCases(_taskType: string, qa1Result?: QA1Result): AdversarialTestCase[] {
     const cases: AdversarialTestCase[] = [];
 
     // 生成各类测试用例
-    cases.push(...generateEmptyInputCases(taskType));
-    cases.push(...generateExtremeCases(taskType));
-    cases.push(...generateAdversarialPromptCases(taskType));
-    cases.push(...generateBoundaryCases(taskType));
+    cases.push(...generateEmptyInputCases(_taskType));
+    cases.push(...generateExtremeCases(_taskType));
+    cases.push(...generateAdversarialPromptCases(_taskType));
+    cases.push(...generateBoundaryCases(_taskType));
 
     // 如果有 QA-1 结果，可以针对性地生成更多测试
     if (qa1Result) {
@@ -449,11 +440,11 @@ export class QA2Adversarial {
    * 执行对抗性测试
    */
   async runAdversarialTests(
-    taskType: string,
-    executor: (input: unknown) => Promise<string>,
+    _taskType: string,
+    executor: (_input: unknown) => Promise<string>,
     qa1Result: QA1Result
   ): Promise<AdversarialResult> {
-    const testCases = this.generateAdversarialCases(taskType, qa1Result);
+    const testCases = this.generateAdversarialCases(_taskType, qa1Result);
     const challenges: Challenge[] = [];
     let passedTests = 0;
     let failedTests = 0;
@@ -510,11 +501,11 @@ export class QA2Adversarial {
    * 同步执行对抗性测试（不调用外部 executor）
    */
   evaluateAdversarialTests(
-    taskType: string,
-    output: string,
+    _taskType: string,
+    _output: string,
     qa1Result: QA1Result
   ): AdversarialResult {
-    const testCases = this.generateAdversarialCases(taskType, qa1Result);
+    const testCases = this.generateAdversarialCases(_taskType, qa1Result);
     const challenges: Challenge[] = [];
 
     // 不实际执行测试，只做静态分析

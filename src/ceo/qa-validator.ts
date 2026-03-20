@@ -3,8 +3,6 @@
  * 负责：黄金样本验证 + 不变性规则检查 + 测试用例生成 + 覆盖率追踪
  */
 
-import { z } from 'zod';
-
 // ============ 类型定义 ============
 
 /**
@@ -145,7 +143,7 @@ function createNoFabricationRule(): InvariantRule {
       if (context.hasData) return true;
 
       // 检查是否存在具体日期模式 (YYYY-MM-DD 或 YYYY/MM/DD)
-      const datePattern = /\d{4}[-\/]\d{2}[-\/]\d{2}/g;
+      const datePattern = /\d{4}[-/]\d{2}[-/]\d{2}/g;
       const hasSpecificDates = datePattern.test(output);
 
       return !hasSpecificDates;
@@ -285,7 +283,7 @@ export class QA1Validator {
   /**
    * 使用黄金样本验证输出
    */
-  validateWithGoldenSample(output: string, sampleId: string, context: ValidationContext): ValidationResult {
+  validateWithGoldenSample(output: string, sampleId: string, _context: ValidationContext): ValidationResult {
     const sample = this.goldenSamples.get(sampleId);
     const checks: CheckResult[] = [];
     const details: string[] = [];
