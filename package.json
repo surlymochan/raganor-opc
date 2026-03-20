@@ -11,7 +11,7 @@
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint src --ext .ts",
+    "lint": "eslint src",
     "brief:morning": "tsx src/cli/index.ts morning",
     "brief:evening": "tsx src/cli/index.ts evening"
   },

@@ -3,7 +3,7 @@
  * 负责：工作流编排 + 门禁 + 合并
  */
 
-import { generateTaskId, type Intent } from './a2a-envelope.js';
+import { generateTaskId } from './a2a-envelope.js';
 import { generateFactSection, generateFactExcerpt, validateFactSection } from './fact-agent.js';
 import { generatePlaybook, validatePlaybook, isOpenClawAvailable } from './openclaw-client.js';
 

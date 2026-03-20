@@ -101,7 +101,7 @@ export function recognizeIntent(input: string): IntentResult {
         matchedTriggers: [...matchedMorning, ...matchedEvening],
         needsClarification: false
       };
-    } else {
+    } 
       // 分数相同，需要澄清
       return {
         intent: 'unknown',
@@ -110,7 +110,7 @@ export function recognizeIntent(input: string): IntentResult {
         needsClarification: true,
         clarificationQuestion: '无法确定是晨间还是晚间简报，请问您想要：\n  1. 晨间简报\n  2. 晚间简报'
       };
-    }
+    
   }
 
   // 无匹配，需要澄清

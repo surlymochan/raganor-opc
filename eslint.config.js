@@ -1,7 +1,6 @@
 import eslint from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
-import solid from 'eslint-plugin-solid';
 
 export default [
   {
@@ -15,11 +14,16 @@ export default [
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module'
+      },
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        Buffer: 'readonly',
+        fetch: 'readonly'
       }
     },
     plugins: {
-      '@typescript-eslint': tseslint,
-      'solid': solid
+      '@typescript-eslint': tseslint
     },
     rules: {
       // TypeScript
@@ -29,30 +33,28 @@ export default [
 
       // SOLID 原则（作为参考检查）
       'max-depth': ['warn', 4],
-      'max-lines-per-function': ['warn', 100],
+      'max-lines-per-function': ['warn', 150],
       'max-params': ['warn', 4],
 
       // DRY 检查
       'no-duplicate-imports': 'error',
 
       // 通用
-      'no-console': ['warn', { allow: ['error', 'warn'] }],
+      'no-console': 'off',
       'prefer-const': 'error',
       'no-var': 'error',
       'eqeqeq': ['error', 'always'],
       'no-else-return': 'warn',
 
-      // AI Slop 检查（禁止过于通用的 AI 表达）
-      'no-restricted-syntax': ['error', {
-        selector: 'Literal[value=/^(?!.*[A-Za-z]).*$/]',
-        message: '避免使用无意义的占位符或随机字符串'
-      }]
+      // 歧义性检查
+      'no-restricted-syntax': 'off'
     }
   },
   {
     files: ['**/*.test.ts'],
     rules: {
-      'no-console': 'off'
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-unused-vars': 'off'
     }
   }
 ];

@@ -126,7 +126,7 @@ async function runMorningBrief(dataDir: string): Promise<void> {
 /**
  * 执行晨间简报（A2A 模式）
  */
-async function runMorningBriefA2A(dataDir: string): Promise<void> {
+async function runMorningBriefA2ACLI(dataDir: string): Promise<void> {
   const result = await runMorningBriefA2A(dataDir);
 
   // 打印日志到 stderr（可选）
@@ -223,7 +223,7 @@ async function main(): Promise<void> {
   try {
     if (finalMode === 'morning') {
       if (a2aMode) {
-        await runMorningBriefA2A(effectiveDataDir);
+        await runMorningBriefA2ACLI(effectiveDataDir);
       } else {
         await runMorningBrief(effectiveDataDir);
       }
