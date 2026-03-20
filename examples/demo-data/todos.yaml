@@ -1,0 +1,44 @@
+# 待办事项示例
+# 含优先级、部分 done: true/false、可选 due
+todos:
+  - id: "todo-001"
+    title: "完成 Raganor OPC 项目文档"
+    priority: "high"
+    due: "2026-03-21"
+    done: true
+    created_at: "2026-03-20T09:00:00"
+
+  - id: "todo-002"
+    title: "Code Review: PR #234"
+    priority: "high"
+    due: "2026-03-21"
+    done: false
+    created_at: "2026-03-20T10:00:00"
+
+  - id: "todo-003"
+    title: "更新 OKR 周报"
+    priority: "medium"
+    due: "2026-03-22"
+    done: false
+    created_at: "2026-03-20T11:00:00"
+
+  - id: "todo-004"
+    title: "回复客户邮件"
+    priority: "medium"
+    due: "2026-03-21"
+    done: false
+    created_at: "2026-03-20T14:00:00"
+
+  - id: "todo-005"
+    title: "阅读技术文档"
+    priority: "low"
+    due: null
+    done: false
+    created_at: "2026-03-19T09:00:00"
+
+  - id: "todo-006"
+    title: "整理工作台文件"
+    priority: "low"
+    due: null
+    done: true
+    created_at: "2026-03-18T16:00:00"

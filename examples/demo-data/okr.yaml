@@ -1,0 +1,29 @@
+# OKR 周目标示例
+week_id: "2026-W12"  # 2026年第12周
+objectives:
+  - id: "obj-001"
+    title: "完成 Raganor 系统架构设计"
+    status: "in_progress"
+    progress: 60  # 百分比
+    key_results:
+      - id: "kr-001"
+        title: "输出核心规范文档 v0.1"
+        done: true
+      - id: "kr-002"
+        title: "完成 CEO Agent 架构设计"
+        done: true
+      - id: "kr-003"
+        title: "实现 Platform v1 MVP"
+        done: false
+
+  - id: "obj-002"
+    title: "提升团队协作效率"
+    status: "at_risk"
+    progress: 30
+    key_results:
+      - id: "kr-004"
+        title: "建立晨间简报流程"
+        done: false
+      - id: "kr-005"
+        title: "完成 5 次 code review"
+        done: true

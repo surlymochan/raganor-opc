@@ -1,0 +1,34 @@
+# 习惯追踪示例
+# 至少 2 项，today_done 一真一假便于展示
+habits:
+  - id: "habit-001"
+    name: "晨间阅读"
+    frequency: "daily"
+    today_done: true
+    streak: 7
+    note: "每天早起后阅读 30 分钟"
+
+  - id: "habit-002"
+    name: "每日复盘"
+    frequency: "daily"
+    today_done: false
+    streak: 3
+    note: "晚间记录当日完成与改进"
+
+  - id: "habit-003"
+    name: "健身"
+    frequency: "weekly"
+    weekly_target: 3
+    weekly_done: 2
+    today_done: false
+    streak: 0
+    note: "每周至少 3 次运动"
+
+  - id: "habit-004"
+    name: "学习新技术"
+    frequency: "weekly"
+    weekly_target: 2
+    weekly_done: 1
+    today_done: false
+    streak: 5
+    note: "每周学习 1-2 项新技术"
