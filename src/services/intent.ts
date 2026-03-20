@@ -33,14 +33,6 @@ export interface IntentResult {
 }
 
 /**
- * 检查文本是否包含特定触发词
- */
-function _containsTrigger(text: string, triggers: string[]): boolean {
-  const lowerText = text.toLowerCase();
-  return triggers.some(trigger => lowerText.includes(trigger.toLowerCase()));
-}
-
-/**
  * 识别意图
  */
 export function recognizeIntent(input: string): IntentResult {
@@ -64,7 +56,6 @@ export function recognizeIntent(input: string): IntentResult {
   // 计算置信度
   const morningScore = matchedMorning.length;
   const eveningScore = matchedEvening.length;
-  const _totalScore = morningScore + eveningScore;
 
   // 判定意图
   if (morningScore > 0 && eveningScore === 0) {

@@ -43,14 +43,6 @@ function formatTime(isoString: string): string {
 }
 
 /**
- * 格式化日期
- */
-function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
-}
-
-/**
  * OKR 状态标签
  */
 function getOkrStatusTag(status: string): string {

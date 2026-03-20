@@ -22,13 +22,18 @@ export interface GoldenSample {
 }
 
 /**
+ * 不变性规则检查函数类型
+ */
+export type InvariantCheck = (_output: string, _context: ValidationContext) => boolean;
+
+/**
  * 不变性规则
  */
 export interface InvariantRule {
   id: string;
   name: string;
   description?: string;
-  check(output: string, context: ValidationContext): boolean;
+  check: InvariantCheck;
   severity: 'error' | 'warning' | 'info';
   message: string;
 }

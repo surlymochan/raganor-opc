@@ -22,13 +22,18 @@ export interface ConsensusContext {
 export type RuleAction = 'pass' | 'reject' | 'escalate';
 
 /**
+ * 规则条件函数类型
+ */
+export type RuleCondition = (_: ConsensusContext) => boolean;
+
+/**
  * 规则
  */
 export interface Rule {
   id: string;
   name: string;
   description?: string;
-  condition: (context: ConsensusContext) => boolean;
+  condition: RuleCondition;
   action: RuleAction;
   priority: number; // 数字越小优先级越高
   reason: string;

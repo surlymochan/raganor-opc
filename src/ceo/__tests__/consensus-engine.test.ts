@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { QA1Result } from '../qa-adversarial.js';
+import type { QA1Result, AdversarialResult } from '../qa-adversarial.js';
 import {
   ConsensusEngine,
   createConsensusEngine,
   type Rule,
   type Decision
 } from '../consensus-engine.js';
-import type { AdversarialResult } from '../qa-adversarial.js';
 
 describe('ceo/consensus-engine', () => {
   let engine: ConsensusEngine;
