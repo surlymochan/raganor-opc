@@ -649,14 +649,3 @@ export class QA2Adversarial {
 export function createQA2Adversarial(config?: Partial<QA2TriggerConfig>): QA2Adversarial {
   return new QA2Adversarial(config);
 }
-
-// 导出
-export type {
-  QA1Result,
-  Challenge,
-  AdversarialResult,
-  AdversarialTestCase,
-  EscalationReason,
-  QA2TriggerConfig,
-  EscalationRule
-};

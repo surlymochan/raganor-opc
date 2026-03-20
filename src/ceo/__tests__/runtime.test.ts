@@ -60,7 +60,7 @@ describe('ceo/runtime', () => {
 
       const matchingEvent: CeoEvent = {
         type: 'user_message',
-        sender: 'user',
+        sender: 'ceo',
         text: 'this is a test',
         envelope: null,
         raw: null
@@ -75,7 +75,7 @@ describe('ceo/runtime', () => {
 
       const nonMatchingEvent: CeoEvent = {
         type: 'user_message',
-        sender: 'user',
+        sender: 'ceo',
         text: 'hello world',
         envelope: null,
         raw: null

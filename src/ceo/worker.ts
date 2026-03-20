@@ -371,5 +371,3 @@ export class WorkerHealthTracker {
     return unhealthy;
   }
 }
-
-export type { Worker, Task, TaskResult, WorkerRegistration, CallWorkerPayload, WorkerStatus, WorkerInfo };

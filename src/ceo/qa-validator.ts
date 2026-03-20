@@ -665,16 +665,3 @@ export function createQA1ValidatorWithSamples(samples: GoldenSample[]): QA1Valid
   validator.registerGoldenSamples(samples);
   return validator;
 }
-
-// 导出
-export type {
-  GoldenSample,
-  InvariantRule,
-  ValidationContext,
-  ValidationResult,
-  InvariantResult,
-  CheckResult,
-  InvariantCheckResult,
-  TestCase,
-  CoverageReport
-};
