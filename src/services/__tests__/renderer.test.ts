@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import path from 'path';
 import { loadBriefData } from '../data-loader.js';
-import { renderMorningBrief } from '../renderer.js';
+import { renderMorningBrief, renderEveningBrief } from '../renderer.js';
 
 describe('renderer', () => {
   const demoDataDir = path.join(process.cwd(), 'examples', 'demo-data');
@@ -87,6 +87,57 @@ describe('renderer', () => {
 
       expect(output).toContain('（demo 模式）');
       expect(output).toContain('## 今日日程');
+    });
+  });
+
+  describe('renderEveningBrief', () => {
+    it('应输出包含 6 个区块的晚间简报', () => {
+      const data = loadBriefData(demoDataDir);
+      const output = renderEveningBrief(data);
+
+      expect(output).toContain('## 今日完成回顾');
+      expect(output).toContain('## 未完成事项');
+      expect(output).toContain('## 明日预备');
+      expect(output).toContain('## 习惯打卡提醒');
+      expect(output).toContain('## 股票行情');
+      expect(output).toContain('## 身心健康');
+    });
+
+    it('应包含晚间简报标题', () => {
+      const data = loadBriefData(demoDataDir);
+      const output = renderEveningBrief(data);
+
+      expect(output).toContain('# 🌙 晚间简报');
+    });
+
+    it('应包含顺延提示', () => {
+      const data = loadBriefData(demoDataDir);
+      const output = renderEveningBrief(data);
+
+      expect(output).toContain('顺延至明日');
+    });
+
+    it('应包含股票免责声明', () => {
+      const data = loadBriefData(demoDataDir);
+      const output = renderEveningBrief(data);
+
+      expect(output).toContain('不构成投资建议');
+    });
+
+    it('应包含健康免责声明', () => {
+      const data = loadBriefData(demoDataDir);
+      const output = renderEveningBrief(data);
+
+      expect(output).toContain('不提供诊疗');
+    });
+
+    it('空数据目录不应崩溃', () => {
+      const emptyDir = path.join(demoDataDir, 'empty');
+      const data = loadBriefData(emptyDir);
+      const output = renderEveningBrief(data);
+
+      expect(output).toContain('（demo 模式）');
+      expect(output).toContain('## 今日完成回顾');
     });
   });
 });

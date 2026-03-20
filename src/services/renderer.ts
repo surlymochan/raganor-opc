@@ -291,3 +291,178 @@ export function renderMorningBrief(data: BriefData): string {
 
   return sections.join('\n');
 }
+
+/**
+ * 渲染今日完成回顾（日程）
+ */
+function renderCompletedCalendar(events: CalendarEvent[], hasData: boolean): string {
+  const lines: string[] = ['## 今日完成回顾\n'];
+
+  if (!hasData || events.length === 0) {
+    lines.push('> 当前无日程数据（demo 模式）\n');
+    return lines.join('\n');
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const todayEvents = events.filter(e => {
+    const start = new Date(e.start);
+    return start >= today && start < tomorrow;
+  }).filter(e => e.title !== '（无日程）');
+
+  if (todayEvents.length === 0) {
+    lines.push('📅 今日无日程记录\n');
+    return lines.join('\n');
+  }
+
+  todayEvents.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+  for (const event of todayEvents) {
+    lines.push(`- ✅ ${event.title}`);
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * 渲染未完成待办
+ */
+function renderUncompletedTodos(todos: Todo[], hasData: boolean): string {
+  const lines: string[] = ['## 未完成事项\n'];
+
+  if (!hasData || todos.length === 0) {
+    lines.push('> 当前无待办事项\n');
+    return lines.join('\n');
+  }
+
+  const undone = todos.filter(t => !t.done);
+
+  if (undone.length === 0) {
+    lines.push('🎉 所有待办已完成！\n');
+    return lines.join('\n');
+  }
+
+  undone.sort((a, b) => {
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    const aPriority = priorityOrder[a.priority] ?? 2;
+    const bPriority = priorityOrder[b.priority] ?? 2;
+    return aPriority - bPriority;
+  });
+
+  for (const todo of undone) {
+    const priority = getPriorityLabel(todo.priority);
+    lines.push(`- ⬜ ${priority} ${todo.title}`);
+  }
+
+  lines.push('\n> 💡 可顺延至明日处理');
+
+  return lines.join('\n');
+}
+
+/**
+ * 渲染明日预备
+ */
+function renderTomorrowSchedule(events: CalendarEvent[], hasData: boolean): string {
+  const lines: string[] = ['## 明日预备\n'];
+
+  if (!hasData || events.length === 0) {
+    lines.push('> 当前无日程数据（demo 模式）\n');
+    return lines.join('\n');
+  }
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+
+  const dayAfterTomorrow = new Date(tomorrow);
+  dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+
+  const tomorrowEvents = events.filter(e => {
+    const start = new Date(e.start);
+    return start >= tomorrow && start < dayAfterTomorrow;
+  }).filter(e => e.title !== '（无日程）');
+
+  if (tomorrowEvents.length === 0) {
+    lines.push('📅 明日暂无安排\n');
+    return lines.join('\n');
+  }
+
+  tomorrowEvents.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+  for (const event of tomorrowEvents) {
+    const startTime = formatTime(event.start);
+    const endTime = formatTime(event.end);
+    lines.push(`- ${startTime} - ${endTime}：${event.title}`);
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * 渲染习惯未打卡提醒
+ */
+function renderHabitReminders(habits: Habit[], hasData: boolean): string {
+  const lines: string[] = ['## 习惯打卡提醒\n'];
+
+  if (!hasData || habits.length === 0) {
+    lines.push('> 当前无习惯数据\n');
+    return lines.join('\n');
+  }
+
+  const incomplete = habits.filter(h => !h.today_done);
+
+  if (incomplete.length === 0) {
+    lines.push('🌟 今日习惯已全部完成！\n');
+    return lines.join('\n');
+  }
+
+  lines.push('以下习惯今日尚未打卡：\n');
+  for (const habit of incomplete) {
+    lines.push(`- ⬜ ${habit.name}`);
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * 渲染晚间简报
+ */
+export function renderEveningBrief(data: BriefData): string {
+  const sections: string[] = [];
+
+  // 标题
+  const today = new Date().toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long'
+  });
+  sections.push(`# 🌙 晚间简报\n\n*${today}*\n`);
+
+  // 1. 今日完成回顾
+  const calendarData = data.calendar.data;
+  sections.push(renderCompletedCalendar(calendarData?.events || [], data.calendar.hasData));
+
+  // 2. 未完成事项
+  const todosData = data.todos.data;
+  sections.push('\n\n' + renderUncompletedTodos(todosData?.todos || [], data.todos.hasData));
+
+  // 3. 明日预备
+  sections.push('\n\n' + renderTomorrowSchedule(calendarData?.events || [], data.calendar.hasData));
+
+  // 4. 习惯打卡提醒
+  const habitsData = data.habits.data;
+  sections.push('\n\n' + renderHabitReminders(habitsData?.habits || [], data.habits.hasData));
+
+  // 5. OKR 一句
+  sections.push('\n\n' + renderOkr(data.okr.data, data.okr.hasData));
+
+  // 6. 股票/健康占位
+  sections.push('\n\n' + renderStockPlaceholder());
+  sections.push('\n\n' + renderWellnessPlaceholder());
+
+  return sections.join('\n');
+}
