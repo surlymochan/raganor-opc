@@ -77,20 +77,20 @@ function parseArgs(args: string[]): {
   mode: BriefIntent | null;
   dataDir: string | null;
   inputText: string | null;
-  showHelp: boolean;
+  shouldShowHelp: boolean;
   a2aMode: boolean;
 } {
   let mode: BriefIntent | null = null;
   let dataDir: string | null = null;
   let inputText: string | null = null;
-  let showHelp = false;
+  let shouldShowHelp = false;
   let a2aMode = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
     if (arg === '--help' || arg === '-h') {
-      showHelp = true;
+      shouldShowHelp = true;
       break;
     }
 
@@ -112,7 +112,7 @@ function parseArgs(args: string[]): {
     }
   }
 
-  return { mode, dataDir, inputText, showHelp, a2aMode };
+  return { mode, dataDir, inputText, shouldShowHelp, a2aMode };
 }
 
 /**
@@ -177,10 +177,10 @@ async function main(): Promise<void> {
   }
 
   // 解析参数
-  const { mode: explicitMode, dataDir, inputText, showHelp, a2aMode } = parseArgs(args);
+  const { mode: explicitMode, dataDir, inputText, shouldShowHelp, a2aMode } = parseArgs(args);
 
   // 显示帮助
-  if (showHelp) {
+  if (shouldShowHelp) {
     showHelp();
     process.exit(0);
   }
