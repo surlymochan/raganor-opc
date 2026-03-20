@@ -4,6 +4,7 @@ import * as readline from 'readline';
 import { loadBriefData, getDataDir } from '../services/data-loader.js';
 import { renderMorningBrief, renderEveningBrief } from '../services/renderer.js';
 import { recognizeIntent, getTriggerWordsTable, type BriefIntent } from '../services/intent.js';
+import { runMorningBriefA2A, GateService } from '../services/ceo-orchestration.js';
 
 /**
  * CLI 帮助信息
@@ -15,11 +16,22 @@ Raganor CLI - 个人管家简报生成器
 
 用法:
   brief [options] [intent] [input]
+  brief a2a [mode]   # 启用三 Agent A2A 模式
 
 选项:
   --mode <morning|evening>  强制指定模式（跳过意图识别，用于 CI）
+  --a2a                    启用 A2A 模式（CEO + Fact + OpenClaw）
   --data-dir <path>         指定数据目录
   --help                    显示帮助信息
+
+A2A 模式说明:
+  启用后，晨间简报将经过三 Agent 协作：
+  CEO → Fact → OpenClaw → CEO(合并) → 用户
+
+  环境变量:
+  OPENCLAW_URL      OpenClaw 服务地址（默认: http://localhost:3000）
+  OPENCLAW_API_KEY  OpenClaw API 密钥
+  OPENCLAW_ENABLED  是否启用 OpenClaw（默认: true）
 
 意图识别:
   输入包含以下关键词时自动识别：
@@ -29,13 +41,9 @@ Raganor CLI - 个人管家简报生成器
 示例:
   brief morning
   brief evening
-  brief "今天怎么安排"
-  brief --mode morning
+  brief a2a morning      # A2A 模式晨间简报
+  brief --a2a --mode morning
   BRIEF_DATA_DIR=./data brief
-
-非交互式 fallback (CI):
-  brief --mode morning
-  echo "今天怎么安排" | brief
 `);
 }
 
@@ -70,11 +78,13 @@ function parseArgs(args: string[]): {
   dataDir: string | null;
   inputText: string | null;
   showHelp: boolean;
+  a2aMode: boolean;
 } {
   let mode: BriefIntent | null = null;
   let dataDir: string | null = null;
   let inputText: string | null = null;
   let showHelp = false;
+  let a2aMode = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -91,6 +101,8 @@ function parseArgs(args: string[]): {
       }
     } else if (arg === '--data-dir') {
       dataDir = args[++i];
+    } else if (arg === '--a2a' || arg === 'a2a') {
+      a2aMode = true;
     } else if (arg === 'morning') {
       mode = 'morning';
     } else if (arg === 'evening') {
@@ -100,19 +112,48 @@ function parseArgs(args: string[]): {
     }
   }
 
-  return { mode, dataDir, inputText, showHelp };
+  return { mode, dataDir, inputText, showHelp, a2aMode };
 }
 
 /**
- * 执行简报渲染
+ * 执行晨间简报（标准模式）
  */
-async function runBrief(mode: BriefIntent, dataDir: string): Promise<void> {
+async function runMorningBrief(dataDir: string): Promise<void> {
   const data = loadBriefData(dataDir);
+  console.log(renderMorningBrief(data));
+}
 
-  if (mode === 'morning') {
-    console.log(renderMorningBrief(data));
-  } else {
-    console.log(renderEveningBrief(data));
+/**
+ * 执行晨间简报（A2A 模式）
+ */
+async function runMorningBriefA2A(dataDir: string): Promise<void> {
+  const result = await runMorningBriefA2A(dataDir);
+
+  // 打印日志到 stderr（可选）
+  if (result.logs.length > 0) {
+    console.error('--- 编排日志 ---');
+    for (const log of result.logs) {
+      console.error(log);
+    }
+    if (result.errors.length > 0) {
+      console.error('--- 错误 ---');
+      for (const err of result.errors) {
+        console.error(err);
+      }
+    }
+    console.error('----------------');
+  }
+
+  // 输出最终简报
+  console.log(result.markdown);
+
+  // 门禁检查
+  const gateResult = GateService.checkMorningBrief(result.markdown);
+  if (!gateResult.passed) {
+    console.error('\n⚠️ 门禁警告:');
+    for (const v of gateResult.violations) {
+      console.error(`  - ${v}`);
+    }
   }
 }
 
@@ -131,12 +172,12 @@ async function main(): Promise<void> {
     }
     const content = Buffer.concat(chunks).toString().trim();
     if (content) {
-      stdinText = content.split('\n')[0]; // 只取第一行
+      stdinText = content.split('\n')[0];
     }
   }
 
   // 解析参数
-  const { mode: explicitMode, dataDir, inputText, showHelp } = parseArgs(args);
+  const { mode: explicitMode, dataDir, inputText, showHelp, a2aMode } = parseArgs(args);
 
   // 显示帮助
   if (showHelp) {
@@ -148,10 +189,8 @@ async function main(): Promise<void> {
   let finalMode: BriefIntent;
 
   if (explicitMode) {
-    // 强制模式 (--mode)
     finalMode = explicitMode;
   } else if (stdinText) {
-    // 管道输入
     const result = recognizeIntent(stdinText);
     if (result.needsClarification) {
       console.error(result.clarificationQuestion);
@@ -159,10 +198,8 @@ async function main(): Promise<void> {
     }
     finalMode = result.intent;
   } else if (inputText) {
-    // 命令行文本输入
     const result = recognizeIntent(inputText);
     if (result.needsClarification) {
-      // 交互式澄清
       const answer = await askQuestion(result.clarificationQuestion!);
       if (answer === '1') {
         finalMode = 'morning';
@@ -176,7 +213,6 @@ async function main(): Promise<void> {
       finalMode = result.intent;
     }
   } else {
-    // 无输入，显示帮助
     showHelp();
     process.exit(1);
   }
@@ -185,7 +221,17 @@ async function main(): Promise<void> {
   const effectiveDataDir = dataDir || getDataDir();
 
   try {
-    await runBrief(finalMode, effectiveDataDir);
+    if (finalMode === 'morning') {
+      if (a2aMode) {
+        await runMorningBriefA2A(effectiveDataDir);
+      } else {
+        await runMorningBrief(effectiveDataDir);
+      }
+    } else {
+      // 晚间简报（暂时不支持 A2A 模式）
+      const data = loadBriefData(effectiveDataDir);
+      console.log(renderEveningBrief(data));
+    }
   } catch (error) {
     console.error('错误：', error instanceof Error ? error.message : 'Unknown error');
     process.exit(1);
