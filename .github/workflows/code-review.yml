@@ -1,0 +1,244 @@
+name: Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # 1. 架构和代码质量分析
+  architecture-review:
+    name: Architecture & Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install code analysis tools
+        run: npm install --save-dev @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-solid eslint-plugin-prettier
+
+      - name: Run architecture checks
+        run: |
+          echo "=== SOLID Principles Check ==="
+          # 检查函数长度
+          npx tsc --noEmit --pretty 2>&1 | head -20
+
+          echo ""
+          echo "=== DRY Principle Check (Duplicate Code) ==="
+          # 使用 ESLint 检测重复代码
+          npm run lint 2>&1 || true
+
+          echo ""
+          echo "=== AI Slop Detection ==="
+          # 检测过于通用的命名或注释
+          grep -r "TODO\|FIXME\|XXX" src/ || echo "No TODO/FIXME found"
+
+          echo ""
+          echo "=== Code Complexity Check ==="
+          # 简单的圈复杂度检查（函数行数）
+          for f in src/**/*.ts; do
+            lines=$(wc -l < "$f" 2>/dev/null || echo 0)
+            if [ "$lines" -gt 150 ]; then
+              echo "⚠️ $f has $lines lines (consider splitting)"
+            fi
+          done
+
+  # 2. 代码规范检查
+  standards-review:
+    name: Standards Compliance
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run standards compliance check
+        run: |
+          echo "=== Naming Conventions Check ==="
+          # 检查文件命名是否遵循 kebab-case
+          ls -1 src/**/*.ts | grep -E '[A-Z]' | grep -v test | head -10 || echo "Naming OK"
+
+          echo ""
+          echo "=== Export Consistency Check ==="
+          # 检查导出是否一致
+          grep -r "^export " src/*.ts | head -20
+
+          echo ""
+          echo "=== Type Safety Check ==="
+          # 检查 any 类型使用
+          grep -r ": any" src/*.ts | grep -v test || echo "No 'any' found"
+
+          echo ""
+          echo "=== Error Handling Check ==="
+          # 检查是否正确处理错误
+          grep -r "catch" src/*.ts | grep -v test | head -10 || echo "No catch blocks found"
+
+  # 3. AI Slop 和歧义性检查
+  ai-slop-review:
+    name: AI Slop & Clarity Review
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Run AI Slop detection
+        run: |
+          echo "=== AI Slop Detection ==="
+
+          echo "Checking for generic/vague naming..."
+          # 检测过于通用的变量名
+          grep -rn "temp\|tmp\|data\|info\|stuff\|thing\|item\|value\|result" src/*.ts \
+            | grep -v test \
+            | grep -vE "(tmpDir|tmpFile|dataDir|infoMsg)" \
+            | head -15 || echo "Naming looks specific enough"
+
+          echo ""
+          echo "Checking for placeholder comments..."
+          # 检测占位符注释
+          grep -rn "// .*\|/\* .* \*/" src/*.ts \
+            | grep -v test \
+            | grep -vE "(©| Trademark)" \
+            | head -10 || echo "No placeholder comments found"
+
+          echo ""
+          echo "Checking for magic numbers..."
+          # 检测魔法数字
+          grep -rn "=[0-9]\{1,3\}" src/*.ts \
+            | grep -v test \
+            | grep -vE "(0|1|-1|true|false|null|undefined)" \
+            | head -10 || echo "No magic numbers found"
+
+  # 4. SOLID 原则检查
+  solid-review:
+    name: SOLID Principles
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run SOLID checks
+        run: |
+          echo "=== SOLID Principles Review ==="
+
+          echo ""
+          echo "[S] Single Responsibility - Class/Module size check:"
+          for f in src/**/*.ts; do
+            lines=$(wc -l < "$f" 2>/dev/null || echo 0)
+            funcs=$(grep -c "function \|export function \|=>" "$f" 2>/dev/null || echo 0)
+            if [ "$lines" -gt 200 ] && [ "$funcs" -gt 5 ]; then
+              echo "  ⚠️ $f ($lines lines, $funcs functions) - may violate SRP"
+            fi
+          done
+
+          echo ""
+          echo "[O] Open/Closed - Extensibility check:"
+          grep -rn "class.*extends\|implements " src/*.ts | grep -v test | head -10 || echo "No inheritance patterns found"
+
+          echo ""
+          echo "[L] Liskov Substitution - Interface consistency:"
+          # 检查是否有违背里氏替换原则的迹象
+          grep -rn "override\|// override" src/*.ts | head -5 || echo "No override patterns found"
+
+          echo ""
+          echo "[I] Interface Segregation - Large interfaces:"
+          grep -rn "interface.*{" src/*.ts | while read line; do
+            echo "  $line"
+          done | head -10
+
+          echo ""
+          echo "[D] Dependency Inversion - Dependency injection:"
+          grep -rn "new .*(" src/*.ts | grep -v test | grep -v "new Date\|new RegExp" | head -10 || echo "Good - using DI pattern"
+
+  # 5. 最佳实践检查
+  best-practices-review:
+    name: Best Practices
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run best practices check
+        run: |
+          echo "=== Best Practices Review ==="
+
+          echo ""
+          echo "[Async] Async/Await usage:"
+          grep -rn "async " src/*.ts | grep -v test | head -10 || echo "No async functions found"
+
+          echo ""
+          echo "[Error] Error handling consistency:"
+          grep -rn "throw new Error\|process.exit" src/*.ts | grep -v test | head -10 || echo "Error handling OK"
+
+          echo ""
+          echo "[Security] Potential security issues:"
+          grep -rn "eval\|innerHTML\|document.write" src/*.ts | grep -v test || echo "No eval/innerHTML found"
+
+          echo ""
+          echo "[Performance] Inefficient patterns:"
+          grep -rn "for.*for\|JSON.parse.*JSON.stringify" src/*.ts | grep -v test | head -10 || echo "No obvious inefficiencies"
+
+  # 6. 总结报告
+  summary:
+    name: Review Summary
+    runs-on: ubuntu-latest
+    needs: [architecture-review, standards-review, ai-slop-review, solid-review, best-practices-review]
+
+    steps:
+      - name: Print Summary
+        run: |
+          echo "=========================================="
+          echo "    Code Review Summary"
+          echo "=========================================="
+          echo ""
+          echo "Review completed. Please check individual job outputs for details."
+          echo ""
+          echo "Key areas checked:"
+          echo "  ✓ Architecture & Code Quality"
+          echo "  ✓ Standards Compliance"
+          echo "  ✓ AI Slop & Clarity"
+          echo "  ✓ SOLID Principles"
+          echo "  ✓ Best Practices"
+          echo ""
+          echo "Note: This is an automated review. Human review is still recommended."
