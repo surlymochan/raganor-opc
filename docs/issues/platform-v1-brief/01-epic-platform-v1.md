@@ -6,34 +6,78 @@
 
 ## 描述
 
-落实 **`v0.1/community-chat-paradigm.md`** 已定拓扑与 **`v0.1/ceo-agent-architecture.md`** 工程方向：自建 **CEO Agent（TS + 可插拔 FSM）** 作为编排枢纽，经 **community-chat / WebSocket** 接入 **`#raganor-ops` / `#raganor-hr` / `#raganor-pending` + CEO 私聊**，实现 **`ASSIGN` / `RESULT` / `USER_REPLY` / `ROSTER_*` / `QA_*`** 等约定 INTENT 的闭环（实现侧自愿遵守范式；服务端强制校验可后做）。
+落实 **`v0.1/community-chat-paradigm.md`** 已定拓扑与 **`v0.1/ceo-agent-architecture.md`** 工程方向：自建 **CEO Agent（TS + 可插拔 FSM）** 作为编排枢纽，经 **community-chat / WebSocket** 接入 **`#raganor-ops` / `#raganor-hr` / `#raganor-pending` + CEO 私聊**，实现 **`ASSIGN` / `RESULT` / `USER_REPLY` / `ROSTER_*` / `QA_*`** 等约定 INTENT 的闭环。
 
-**版本命名**：本 Epic 为 **Platform v1（Phase 2）**，**不**占用「个人管家 v2」编号；个人管家功能演进仍以 **`docs/issues/personal-butler-v1-brief/`** 与 `v0.1/personal-butler.md` 为准。
+---
 
-**与个人管家 v1 的关系**：
+## 架构设计
 
-- **可并行**：CEO 服务与频道接入 **不依赖** 简报 CLI 跑通。  
-- **可选对接**：`personal-butler` **场景 A**（`personal-butler-v1-brief/12`）可将 A2A 从进程内/HTTP 改为 **ops 频道信封**（见子 Issue `05`）；**非 Platform v1 必达项**。
+### 核心组件
 
-**规格来源（SSOT）**：
+```
+┌─────────────────────────────────────────────────────────┐
+│                      User (最终仲裁)                        │
+└─────────────────────────────────────────────────────────┘
+                            ▲
+                            │ 审批/否决（仅分歧时）
+┌───────────────────────────┴─────────────────────────────┐
+│                    Execution Layer                        │
+│                                                          │
+│  ┌──────────┐     ┌──────────┐     ┌──────────┐   │
+│  │  Worker  │────▶│  QA-1   │────▶│ Consensus │   │
+│  │  (执行)  │     │ (验证者) │     │ (共识)   │   │
+│  └──────────┘     └──────────┘     └────┬─────┘   │
+│         ▲                ▲                │          │
+│         │                │                ▼          │
+│         │         ┌─────┴─────┐   ┌────────┐      │
+│         └─────────│   QA-2    │   │ 决策   │      │
+│                   │ (对抗者)  │   │ 通过   │      │
+│                   └───────────┘   │ 否决   │      │
+│                              │   争议→升级│      │
+│                              └──────────┘      │
+└──────────────────────────────────────────────────────┘
+```
 
-- [v0.1/community-chat-paradigm.md](../../../v0.1/community-chat-paradigm.md)  
-- [v0.1/ceo-agent-architecture.md](../../../v0.1/ceo-agent-architecture.md)  
-- [v0.1/qa-role-and-e2e.md](../../../v0.1/qa-role-and-e2e.md)（平台交付 **可执行功能** 时）  
-- [docs/design/system-design.md](../../design/system-design.md)（总览与泳道图）
+### 角色职责
+
+| 角色 | 职责 | 决策权 |
+|------|------|--------|
+| **Worker** | 执行任务 | 无 |
+| **QA-1** | 标准验证、跑case | 建议通过/否决 |
+| **QA-2** | 对抗性测试（条件触发） | 挑战 QA-1 结论 |
+| **Consensus** | 规则引擎 + 决策 | 通过/否决/升级 |
+| **User** | 最终仲裁 | 仅争议时介入 |
+
+### 触发机制
+
+| 场景 | 触发角色 | 成本 |
+|------|---------|------|
+| 普通任务 | Worker → QA-1 → Consensus | 低 |
+| 标准任务 | Worker → QA-1 → QA-2 → Consensus | 中 |
+| 高风险任务 | 全部 + User 审批 | 高 |
+
+---
+
+## 版本说明
+
+本 Epic 为 **Platform v1（Phase 2）**，**不**占用「个人管家 v2」编号。
+
+---
 
 ## 验收标准（Epic 级）
 
-- [ ] CEO 服务可配置 **`CHANNEL_ID_CEO_DM` / `OPS` / `HR` / `PENDING`** 并启动无报错  
-- [ ] 能在 **ops** 观测到带 **`task_id`** 的派单与 `RESULT` 回路（至少 Worker **mock** 或单测等价）  
-- [ ] **未雇佣** Agent 仅出现在 **pending**（或等价隔离），**不得**在 ops 派生产单  
-- [ ] 用户侧 **私聊** 可收 **`USER_REPLY`**（可与 ops 留痕对照）  
-- [ ] `docs/issues/README.md` 已链到本 Epic 与子 Issue；新人可从 **[`docs/design/system-design.md`](../../design/system-design.md)** 读到与本 Epic 一致的流程描述  
+- [ ] CEO 服务可配置 **`CHANNEL_ID_CEO_DM` / `OPS` / `HR` / `PENDING`** 并启动无报错
+- [ ] Worker 执行器可注册和调用
+- [ ] QA-1 验证框架（黄金样本 + 不变性规则）
+- [ ] QA-2 对抗性测试框架（条件触发）
+- [ ] Consensus 规则引擎 + 升级机制
+- [ ] 能在 **ops** 观测到带 **`task_id`** 的派单与 `RESULT` 回路
+- [ ] 用户侧 **私聊** 可收 **`USER_REPLY`**
 
 ## 标签建议
 
-`epic`, `platform`, `ceo`, `community-chat`, `raganor-web-ui`
+`epic`, `platform`, `ceo`, `community-chat`, `qa`, `consensus`
 
 ## 子 Issue
 
-同目录 `02`–`06`（`05` 为可选对接个人管家场景 A）。
+见同目录 `02`–`06`（`05` 为可选对接个人管家场景 A）。
