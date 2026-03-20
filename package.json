@@ -23,6 +23,7 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "hono": "^4.0.0",
     "yaml": "^2.3.4",
     "zod": "^3.22.4"
   },
