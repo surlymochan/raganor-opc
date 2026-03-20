@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "description": "Raganor OPC - Multi-Agent One-Person Company Framework",
   "type": "module",
+  "bin": {
+    "brief": "./dist/cli/index.js"
+  },
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch src/cli/index.ts",
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
