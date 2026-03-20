@@ -1,10 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import path from 'path';
 import { loadBriefData } from '../data-loader.js';
 import { renderMorningBrief, renderEveningBrief } from '../renderer.js';
 
 describe('renderer', () => {
   const demoDataDir = path.join(process.cwd(), 'examples', 'demo-data');
+
+  // 使用 fake timers 确保日期一致性
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-21T10:00:00'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   describe('renderMorningBrief', () => {
     it('应输出包含 6 个区块的晨间简报', () => {
