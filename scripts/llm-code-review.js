@@ -10,13 +10,14 @@ import 'dotenv/config';
 import OpenAI from 'openai';
 import { getPRDiff } from './github-api.js';
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.BAILIAN_API_KEY;
+const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || process.env.BAILIAN_BASE_URL;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const PR_NUMBER = process.env.GITHUB_REF_NAME?.match(/\d+/)?.[0] || process.env.GITHUB_EVENT_NUMBER;
 const REPO_FULL_NAME = process.env.GITHUB_REPOSITORY;
 
 if (!OPENAI_API_KEY) {
-  console.log('⚠️ OPENAI_API_KEY not configured, skipping LLM review');
+  console.log('⚠️ OPENAI_API_KEY / BAILIAN_API_KEY not configured, skipping LLM review');
   process.exit(0);
 }
 
@@ -27,6 +28,7 @@ if (!GITHUB_TOKEN || !PR_NUMBER || !REPO_FULL_NAME) {
 
 const openai = new OpenAI({
   apiKey: OPENAI_API_KEY,
+  baseURL: OPENAI_BASE_URL,
 });
 
 /**

@@ -48,13 +48,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: LLM Code Review (OpenAI)
-        if: github.event_name == 'pull_request' && secrets.OPENAI_API_KEY != ''
+      - name: LLM Code Review (OpenAI / Bailian compatible)
+        if: >
+          github.event_name == 'pull_request' &&
+          (secrets.OPENAI_API_KEY != '' || secrets.BAILIAN_API_KEY != '')
         run: |
-          npm ci --prefix scripts
           node scripts/llm-code-review.js
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BAILIAN_API_KEY: ${{ secrets.BAILIAN_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.BAILIAN_BASE_URL }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_NUMBER: ${{ github.event.number }}
