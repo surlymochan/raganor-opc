@@ -12,6 +12,7 @@ import { getPRDiff } from './github-api.js';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.BAILIAN_API_KEY;
 const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || process.env.BAILIAN_BASE_URL;
+const LLM_MODEL = process.env.LLM_MODEL || 'gpt-4o-mini';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const PR_NUMBER = process.env.GITHUB_REF_NAME?.match(/\d+/)?.[0] || process.env.GITHUB_EVENT_NUMBER;
 const REPO_FULL_NAME = process.env.GITHUB_REPOSITORY;
@@ -96,7 +97,7 @@ ${diff}
 `;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: LLM_MODEL,
       messages: [
         { role: 'user', content: prompt }
       ],
