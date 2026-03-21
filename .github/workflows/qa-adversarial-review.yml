@@ -47,3 +47,14 @@ jobs:
         uses: thomasdondorf/puppeteer-copilot-review@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: LLM Code Review (OpenAI)
+        if: github.event_name == 'pull_request' && secrets.OPENAI_API_KEY != ''
+        run: |
+          npm ci --prefix scripts
+          node scripts/llm-code-review.js
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_NUMBER: ${{ github.event.number }}
