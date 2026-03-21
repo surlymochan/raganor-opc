@@ -1,10 +1,122 @@
 #!/usr/bin/env node
 
 import * as readline from 'readline';
+import fs from 'fs';
 import { loadBriefData, getDataDir } from '../services/data-loader.js';
 import { renderMorningBrief, renderEveningBrief } from '../services/renderer.js';
 import { recognizeIntent, getTriggerWordsTable, type BriefIntent } from '../services/intent.js';
 import { runMorningBriefA2A, GateService } from '../services/ceo-orchestration.js';
+
+/**
+ * 极简 Markdown 转 HTML（满足演示需求）
+ */
+function markdownToHtml(markdown: string): string {
+  let html = markdown
+    // 标题
+    .replace(/^# (.*)$/gm, '<h1>$1</h1>')
+    .replace(/^## (.*)$/gm, '<h2>$1</h2>')
+    .replace(/^### (.*)$/gm, '<h3>$1</h3>')
+    // 加粗
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    // 列表
+    .replace(/^- (.*)$/gm, '<li>$1</li>')
+    // 引用
+    .replace(/^> (.*)$/gm, '<blockquote>$1</blockquote>')
+    // 换行
+    .replace(/\n/g, '<br>\n');
+
+  // 包裹列表（简单处理）
+  html = html.replace(/<li>/g, '<ul>\n<li>').replace(/<\/li>\n<ul>/g, '</li>\n</ul>\n<ul>');
+  if (html.includes('<li>')) {
+    html += '</ul>';
+  }
+
+  return html;
+}
+
+/**
+ * 生成完整 HTML 页面
+ */
+function generateHtmlPage(title: string, markdownContent: string): string {
+  const bodyHtml = markdownToHtml(markdownContent);
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #fff;
+    }
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 2rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #eee;
+    }
+    h2 {
+      color: #34495e;
+      margin: 1.5rem 0 1rem;
+    }
+    h3 {
+      margin: 1rem 0 0.5rem;
+    }
+    ul {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    li {
+      margin-bottom: 0.5rem;
+    }
+    blockquote {
+      border-left: 4px solid #ddd;
+      padding-left: 1rem;
+      color: #666;
+      margin: 1rem 0;
+      font-style: italic;
+    }
+    strong {
+      color: #000;
+    }
+    em {
+      font-style: italic;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #1a1a1a;
+        color: #e0e0e0;
+      }
+      h1, h2, h3 {
+        color: #eee;
+      }
+      blockquote {
+        color: #aaa;
+      }
+      strong {
+        color: #fff;
+      }
+    }
+  </style>
+</head>
+<body>
+${bodyHtml}
+</body>
+</html>
+`;
+}
 
 /**
  * CLI 帮助信息
@@ -21,6 +133,8 @@ Raganor CLI - 个人管家简报生成器
 选项:
   --mode <morning|evening>  强制指定模式（跳过意图识别，用于 CI）
   --a2a                    启用 A2A 模式（CEO + Fact + OpenClaw）
+  --html                   输出为单页 HTML（便于录屏演示）
+  --output <path>           指定 HTML 输出文件（默认: brief.html）
   --data-dir <path>         指定数据目录
   --help                    显示帮助信息
 
@@ -41,7 +155,9 @@ A2A 模式说明:
 示例:
   brief morning
   brief evening
-  brief a2a morning      # A2A 模式晨间简报
+  brief morning --html          # 输出 HTML 到 brief.html
+  brief morning --html --output=index.html
+  brief a2a morning              # A2A 模式晨间简报
   brief --a2a --mode morning
   BRIEF_DATA_DIR=./data brief
 `);
@@ -79,12 +195,16 @@ function parseArgs(args: string[]): {
   inputText: string | null;
   shouldShowHelp: boolean;
   a2aMode: boolean;
+  htmlOutput: boolean;
+  htmlOutputPath: string;
 } {
   let mode: BriefIntent | null = null;
   let dataDir: string | null = null;
   let inputText: string | null = null;
   let shouldShowHelp = false;
   let a2aMode = false;
+  let htmlOutput = false;
+  let htmlOutputPath = 'brief.html';
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -103,6 +223,16 @@ function parseArgs(args: string[]): {
       dataDir = args[++i];
     } else if (arg === '--a2a' || arg === 'a2a') {
       a2aMode = true;
+    } else if (arg === '--html') {
+      htmlOutput = true;
+    } else if (arg.startsWith('--output')) {
+      // --output=path or --output path
+      if (arg.includes('=')) {
+        htmlOutputPath = arg.split('=')[1];
+      } else {
+        htmlOutputPath = args[++i];
+      }
+      htmlOutput = true;
     } else if (arg === 'morning') {
       mode = 'morning';
     } else if (arg === 'evening') {
@@ -112,7 +242,7 @@ function parseArgs(args: string[]): {
     }
   }
 
-  return { mode, dataDir, inputText, shouldShowHelp, a2aMode };
+  return { mode, dataDir, inputText, shouldShowHelp, a2aMode, htmlOutput, htmlOutputPath };
 }
 
 /**
@@ -177,7 +307,7 @@ async function main(): Promise<void> {
   }
 
   // 解析参数
-  const { mode: explicitMode, dataDir, inputText, shouldShowHelp, a2aMode } = parseArgs(args);
+  const { mode: explicitMode, dataDir, inputText, shouldShowHelp, a2aMode, htmlOutput, htmlOutputPath } = parseArgs(args);
 
   // 显示帮助
   if (shouldShowHelp) {
@@ -221,16 +351,31 @@ async function main(): Promise<void> {
   const effectiveDataDir = dataDir || getDataDir();
 
   try {
+    let content: string;
+    const data = loadBriefData(effectiveDataDir);
+
     if (finalMode === 'morning') {
       if (a2aMode) {
+        // A2A 模式不支持 HTML 直接输出（保持原有行为
         await runMorningBriefA2ACLI(effectiveDataDir);
+        return;
       } else {
-        await runMorningBrief(effectiveDataDir);
+        content = renderMorningBrief(data);
       }
     } else {
-      // 晚间简报（暂时不支持 A2A 模式）
-      const data = loadBriefData(effectiveDataDir);
-      console.log(renderEveningBrief(data));
+      content = renderEveningBrief(data);
+    }
+
+    // HTML 输出
+    if (htmlOutput) {
+      const today = new Date().toLocaleDateString('zh-CN');
+      const title = `Raganor - ${finalMode === 'morning' ? '晨间' : '晚间'}简报 ${today}`;
+      const html = generateHtmlPage(title, content);
+      fs.writeFileSync(htmlOutputPath, html, 'utf-8');
+      console.log(`✅ HTML 已输出到: ${htmlOutputPath}`);
+    } else {
+      // 默认输出 Markdown 到 stdout
+      console.log(content);
     }
   } catch (error) {
     console.error('错误：', error instanceof Error ? error.message : 'Unknown error');

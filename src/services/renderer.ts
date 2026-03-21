@@ -246,6 +246,19 @@ ${WELLNESS_DISCLAIMER}`;
 }
 
 /**
+ * 渲染今日焦点（day_focus.md）
+ */
+function renderDayFocus(content: string, hasData: boolean): string {
+  if (!hasData || !content.trim()) {
+    return '';
+  }
+
+  const lines: string[] = ['## 🎯 今日焦点\n'];
+  lines.push(content);
+  return lines.join('\n');
+}
+
+/**
  * 渲染晨间简报
  */
 export function renderMorningBrief(data: BriefData): string {
@@ -260,9 +273,14 @@ export function renderMorningBrief(data: BriefData): string {
   });
   sections.push(`# 🌅 晨间简报\n\n*${today}*\n`);
 
+  // 0. 今日焦点（如果有）- 放在最开头突出展示
+  if (data.dayFocus.hasData && data.dayFocus.data) {
+    sections.push('\n' + renderDayFocus(data.dayFocus.data.content, data.dayFocus.hasData));
+  }
+
   // 1. 今日日程
   const calendarData = data.calendar.data;
-  sections.push(renderCalendar(calendarData?.events || [], data.calendar.hasData));
+  sections.push('\n\n' + renderCalendar(calendarData?.events || [], data.calendar.hasData));
 
   // 2. 待办事项
   const todosData = data.todos.data;
