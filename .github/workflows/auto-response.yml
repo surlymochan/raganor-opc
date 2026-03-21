@@ -1,0 +1,26 @@
+# 自动回应新 PR
+name: Auto PR Response
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  response:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+    - name: Auto comment
+      uses: thijsvanloef/pr-comment-action@v3
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        message: |
+          👋 你好！感谢你的 PR。CI 正在运行，请等待所有检查完成后再合并。
+
+          🔍 已触发自动化评审：
+          - ✅ 构建检查
+          - ✅ 单元测试
+          - ✅ LLM 代码评审
+          - ✅ CodeQL 安全扫描
+
+          如有问题会自动显示在这里。
