@@ -41,3 +41,9 @@ jobs:
           echo "- ✅ 所有单元测试通过" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ 代码构建成功" >> $GITHUB_STEP_SUMMARY
           echo "- ℹ️  如需 LLM 评审，请配置 API Key 密钥" >> $GITHUB_STEP_SUMMARY
+
+      - name: Request GitHub Copilot Code Review
+        if: github.event_name == 'pull_request'
+        uses: thomasdondorf/puppeteer-copilot-review@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
