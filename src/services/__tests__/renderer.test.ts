@@ -8,8 +8,10 @@ describe('renderer', () => {
 
   // 使用 fake timers 确保日期一致性
   beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-03-21T10:00:00'));
+    vi.useFakeTimers({
+      now: new Date('2026-03-21T00:00:00Z'),
+      shouldAdvanceTime: false
+    });
   });
 
   afterEach(() => {
