@@ -1,0 +1,28 @@
+# 自动关闭 stale issue
+name: Close stale issues
+
+on:
+  schedule:
+  - cron: '0 12 * * *'  # 每天 UTC 12:00 (北京时间 20:00) 运行
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+    - uses: actions/stale@v9
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        days-before-stale: 60
+        days-before-close: 7
+        stale-issue-message: >
+          此 issue 已标记为 stale，因为它已经超过 60 天没有活动。它将在 7 天后关闭，如果没有进一步活动。
+        stale-pr-message: >
+          此 PR 已标记为 stale，因为它已经超过 60 天没有活动。它将在 7 天后关闭，如果没有进一步活动。
+        close-issue-message: 此 issue 已自动关闭，因为它已经 stale 超过 7 天。
+        close-pr-message: 此 PR 已自动关闭，因为它已经 stale 超过 7 天。
+        any-of-labels: []
+        exempt-issue-labels: ['pinned', 'security']
+        exempt-pr-labels: ['pinned', 'security']
