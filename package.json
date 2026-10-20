@@ -2,6 +2,23 @@
   "name": "raganor-opc",
   "version": "0.1.0",
   "description": "Raganor OPC - Multi-Agent One-Person Company Framework",
+  "homepage": "https://github.com/surlymochan/raganor-opc#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/surlymochan/raganor-opc.git"
+  },
+  "bugs": {
+    "url": "https://github.com/surlymochan/raganor-opc/issues"
+  },
+  "keywords": [
+    "multi-agent",
+    "ceo",
+    "personal-assistant",
+    "automation",
+    "ai-agents",
+    "orchestration",
+    "one-person-company"
+  ],
   "type": "module",
   "bin": {
     "brief": "./dist/cli/index.js"
@@ -15,12 +32,6 @@
     "brief:morning": "tsx src/cli/index.ts morning",
     "brief:evening": "tsx src/cli/index.ts evening"
   },
-  "keywords": [
-    "multi-agent",
-    "ceo",
-    "personal-assistant",
-    "automation"
-  ],
   "license": "MIT",
   "dependencies": {
     "hono": "^4.0.0",
