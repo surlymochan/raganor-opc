@@ -1,5 +1,7 @@
 # Raganor OPC
 
+> [English](README.en.md) | 中文
+
 **一人公司式多 Agent 编排框架**：CEO + Worker + QA，契约与机械验收优先。
 
 > 一句话需求 → 晨/晚简报；长程任务靠周节奏与 OKR/习惯占位。
